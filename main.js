@@ -19,9 +19,11 @@ if (path.lastIndexOf('/') === path.length - 1) {
 }
 
 var locationRule =
-	'location ' + path + ' {\n' +
-	'  try_files $uri $uri/ ' + path + '/index.php?$args;\n' +
-	'}\n\n';
+`location ${path} {
+	try_files $uri $uri/ ${path}/index.php?$args;
+}
+
+`;
 
 
 appendFile(
