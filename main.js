@@ -4,6 +4,8 @@ const appendFile = Promise.promisify(fs.appendFile);
 const cmd = require('node-cmd');
 getAsync = Promise.promisify(cmd.get, { multiArgs: true, context: cmd });
 
+const snippetPath = '/etc/nginx/snippets/wp-permalinks.conf';
+
 if (process.argv.length !== 3) {
 	console.log('Usage: sudo node main.js <wp-location>');
 	return;
@@ -18,6 +20,13 @@ if (path.lastIndexOf('/') === path.length - 1) {
 	path = path.slice(0, path.length - 1);
 }
 
+const locationFile = fs.readFileSync(snippetPath, {encoding: 'utf8'});
+
+if (locationFile.includes(`location ${path}`)) {
+	console.log(`Location already in ${path}, skipping.`);
+	return;
+}
+
 var locationRule =
 `location ${path} {
 	try_files $uri $uri/ ${path}/index.php?$args;
@@ -25,15 +34,14 @@ var locationRule =
 
 `;
 
-
 appendFile(
-	'/etc/nginx/snippets/wp-permalinks.conf',
+	snippetPath,
 	locationRule,
 	{ mode: 0644 },
 	(err) => { if (err) { throw err; } }
 )
 .then(() => {
-	console.log('/etc/nginx/snippets/wp-permalinks.conf updated successfully.');
+	console.log(`${path} updated successfully.`);
 	console.log('Restarting nginx...');
 	return getAsync('nginx -s reload');
 })
